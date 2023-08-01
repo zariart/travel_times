@@ -1,0 +1,74 @@
+#!/usr/bin/env python
+
+from gmaps.directions import Directions
+from datetime import datetime
+import time
+import csv
+from argparse import ArgumentParser
+from ConfigParser import ConfigParser
+
+DEFAULT_SECTION = 'Main'
+
+
+def time_to_epoch(t):
+    return int(time.mktime(t.timetuple()))
+
+
+def data_for(direction, key, readable=False):
+    data = direction['legs'][0][key]  # !!! doesn't work correctly for directions with waypoints
+    if readable:
+        return data['text']
+    else:
+        return data['value']
+
+
+def distance_for(direction, readable=False):
+    return data_for(direction, 'distance', readable)
+
+
+def duration_for(direction, readable=False):
+    return data_for(direction, 'duration', readable)
+
+
+def parse_args():
+    parser = ArgumentParser(description='Gather travel times and distances to CSV table')
+    parser.add_argument('config', help='Config file with keys and locations')
+    parser.add_argument('-v', '--verbose', action="store_true", help='Config file with keys and locations')
+    return parser.parse_args()
+
+def get_config(cfgfile):
+    cfg = ConfigParser()
+    cfg.add_section(DEFAULT_SECTION)
+    cfg.set(DEFAULT_SECTION, 'data', 'duration')
+    cfg.set(DEFAULT_SECTION, 'readable', 'false')
+    cfg.read(cfgfile)
+    return cfg
+
+
+def main(cfg, verbose=None):
+    data = cfg.get(DEFAULT_SECTION, 'data')
+    readable = cfg.getboolean(DEFAULT_SECTION, 'readable')
+    api_key = cfg.get(DEFAULT_SECTION, 'api_key')
+    from_dir = cfg.get(DEFAULT_SECTION, 'from')
+    to_dir = cfg.get(DEFAULT_SECTION, 'to')
+    output = cfg.get(DEFAULT_SECTION, 'output')
+
+    api = Directions(api_key=api_key)
+
+    dirs = api.directions(from_dir, to_dir,
+                          sensor=False, mode='driving', alternatives=True,
+                          departure_time=time_to_epoch(datetime.now()))
+
+    with open(output, mode='a+') as csvfile:
+        writer = csv.writer(csvfile, dialect='excel')
+
+        times = [data_for(d, data, readable) for d in dirs]
+        writer.writerow([datetime.now()] + times)
+
+    if verbose:
+        print "All done"
+
+if __name__ == '__main__':
+    params = parse_args()
+    config = get_config(params.config)
+    main(config, verbose=params.verbose)

@@ -1,0 +1,19 @@
+[Main]
+
+#  Your Google Maps API key
+api_key = AIzaSyDYCAJi0JKw2ZuRTBrG7RaFzYY821MR
+
+#  From travel location
+from = Varthur Rd, Chandra Layout, Marathahalli, Bengaluru, Karnataka 560037
+
+#  To travel location
+to = Silk Board Flyover, Madiwala, Stage 1, Bommanahalli, Bengaluru, Karnataka
+
+#  CSV file to update
+output = travel1.csv
+
+#  Set to duration (default) or distance
+#data = distance
+
+#  Set to true to use human-readable format
+#readable = false
